@@ -2,8 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chiếc nón kì diệu & Đấu trường 1vs1 - Thầy Tư dạy tin</title>
     <meta name="description" content="Công cụ Vòng quay may mắn, Trắc nghiệm và Đấu trường 1vs1 miễn phí.">
     <meta name="author" content="Thầy Tư dạy tin">
@@ -17,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
     
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
         /* Ẩn các view và modal ban đầu */
         #quiz-page, #winner-modal, #question-modal, #zalo-modal, #json-generator-modal, #help-modal, #math-tool-modal, #video-modal, #battle-setup-modal { display: none; }
         /* Battle view mặc định ẩn */
@@ -37,6 +36,7 @@
         }
         
         #wheel { transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1); }
+        /* Responsive Text size in wheel handled by JS, but base CSS here */
         .student-name { position: absolute; transform-origin: 50% 50%; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-weight: 600; color: white; text-align: center; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
         /* Bảng xếp hạng */
@@ -61,25 +61,59 @@
         .draggable-header { cursor: move; user-select: none; }
     </style>
 </head>
-<body class="p-4 lg:p-8">
-
+<body class="p-2 md:p-4 lg:p-8">
     <canvas id="confetti-canvas"></canvas>
     
+    <header class="w-full bg-gradient-to-r from-blue-800 via-blue-600 to-cyan-600 text-white p-3 rounded-xl shadow-lg mb-4 md:mb-6 flex flex-col md:flex-row justify-between items-center border-b-4 border-blue-900 relative z-50">
+        <div class="flex items-center space-x-3 mb-2 md:mb-0">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-blue-700 shadow-[0_0_15px_rgba(255,255,255,0.5)] border-2 border-yellow-400">
+                <i data-lucide="monitor-smartphone" class="w-6 h-6 md:w-7 md:h-7"></i>
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-lg md:text-2xl font-black uppercase tracking-wider" style="font-family: 'Arial', sans-serif; text-shadow: 2px 2px 0px rgba(0,0,0,0.2);">
+                    GVITVN <span class="text-yellow-300">TOOLS</span>
+                </h1>
+                <span class="text-[10px] md:text-xs text-blue-100 font-medium tracking-[0.2em] uppercase">Thầy Tư Dạy Tin • 4.0</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 md:space-x-6">
+            <div class="hidden md:flex flex-col items-end border-r border-blue-400 pr-6">
+                <span id="header-realtime" class="text-2xl font-mono font-bold leading-none text-yellow-300 drop-shadow-sm">00:00:00</span>
+                <span id="header-date" class="text-xs text-blue-100 mt-1 font-semibold">Đang tải ngày...</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <a href="https://www.duytu.io.vn/" class="flex items-center space-x-1 md:space-x-2 px-2 py-2 md:px-3 bg-white/10 hover:bg-blue-500 rounded-lg transition border border-white/20 text-white font-bold text-xs md:text-sm hover:shadow-md" title="Quay về trang chủ">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span>Về Trang chủ</span>
+                </a>
+
+                <a href="https://zalo.me/g/udpr88" target="_blank" class="p-2 bg-white/10 hover:bg-blue-500 rounded-lg transition border border-white/20 group" title="Nhóm Zalo">
+                    <i data-lucide="message-circle" class="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform"></i>
+                </a>
+                
+                <button onclick="toggleFullScreen()" class="p-2 bg-yellow-500 hover:bg-yellow-400 text-blue-900 rounded-lg transition shadow-md font-bold border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1" title="Toàn màn hình">
+                    <i data-lucide="expand" class="w-5 h-5 md:w-6 md:h-6"></i>
+                </button>
+            </div>
+        </div>
+    </header>
     <audio id="bg-music" src="https://aiphocap.vn/chiecnonkydieu.mp3" preload="auto"></audio>
     
-    <button id="show-help-modal-btn" class="btn-press w-16 h-16 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700 transition border-blue-800 fixed bottom-5 right-5 z-50">
-        <i data-lucide="help-circle" class="w-8 h-8"></i>
+    <button id="show-help-modal-btn" class="btn-press w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700 transition border-blue-800 fixed bottom-5 right-5 z-50">
+        <i data-lucide="help-circle" class="w-6 h-6 md:w-8 md:h-8"></i>
     </button>
 
-    <div id="wheel-view" class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 min-h-screen">
+    <div id="wheel-view" class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 min-h-screen pb-20">
         
-        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg flex flex-col space-y-3 h-fit">
+        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg flex flex-col space-y-3 h-fit order-2 lg:order-1">
             <div class="flex-grow flex flex-col min-h-0">
                 <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center space-x-2"><i data-lucide="bar-chart-3" class="text-green-600 w-5 h-5"></i><h2 class="text-xl font-bold text-gray-800">Bảng Xếp Hạng</h2></div>
+                    <div class="flex items-center space-x-2"><i data-lucide="bar-chart-3" class="text-green-600 w-5 h-5"></i><h2 class="text-lg md:text-xl font-bold text-gray-800">Bảng Xếp Hạng</h2></div>
                     <button id="clear-leaderboard-btn" class="text-xs text-red-500 hover:text-red-700 font-medium flex items-center space-x-1"><i data-lucide="trash" class="w-3 h-3"></i><span>Xóa BXH</span></button>
                 </div>
-                <div id="leaderboard-container" class="flex-grow max-h-64 overflow-y-auto pr-2"><ul id="leaderboard-list" class="text-sm text-gray-700 space-y-1"></ul></div>
+                <div id="leaderboard-container" class="flex-grow max-h-48 md:max-h-64 overflow-y-auto pr-2"><ul id="leaderboard-list" class="text-sm text-gray-700 space-y-1"></ul></div>
             </div>
             <div class="border-b pb-3 border-gray-200">
                 <div class="flex items-center justify-between mb-2">
@@ -99,7 +133,7 @@
 
             <div>
                 <p class="text-xs text-gray-500 mt-1 mb-1">Danh sách học sinh của lớp đang chọn:</p>
-                <textarea id="student-textarea" class="w-full h-48 border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" rows="10" placeholder="Dán tên học sinh vào đây..."></textarea>
+                <textarea id="student-textarea" class="w-full h-32 md:h-48 border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" rows="10" placeholder="Dán tên học sinh vào đây..."></textarea>
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     <button id="import-students-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-teal-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-teal-600 transition border-teal-700 text-sm"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Nhập DS</span></button>
                     <button id="export-students-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-orange-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-orange-600 transition border-orange-700 text-sm"><i data-lucide="download-cloud" class="w-4 h-4"></i><span>Xuất DS</span></button>
@@ -121,20 +155,22 @@
             </div>
         </div>
 
-        <div class="w-full lg:w-1/2 flex flex-col items-center justify-start p-2"> 
-          <h1 class="text-3xl font-extrabold text-gray-800 mb-2 uppercase tracking-wider text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">Vòng Quay May Mắn</h1>
+        <div class="w-full lg:w-1/2 flex flex-col items-center justify-start p-2 order-1 lg:order-2">
+           <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2 uppercase tracking-wider text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">Vòng Quay May Mắn</h1>
 
-          <div class="relative flex items-center justify-center" style="margin-top: +30px;">
-            <div class="absolute left-1/2 -translate-x-1/2 z-20" style="width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 30px solid #E74C3C; filter: drop-shadow(0px -2px 2px rgba(0,0,0,0.3)); top: -18px;"></div>
-            <div id="wheel-container" class="relative w-100 h-100 md:w-[550px] md:h-[550px] rounded-full border-8 border-white shadow-2xl overflow-hidden" style="transform: translateY(-6px);">
+          <div class="relative flex items-center justify-center" style="margin-top: +20px;">
+            <div class="absolute left-1/2 -translate-x-1/2 z-20" style="width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #E74C3C; filter: drop-shadow(0px -2px 2px rgba(0,0,0,0.3)); top: -15px; md:border-left: 20px; md:border-right: 20px; md:border-top: 30px; md:top: -18px;"></div>
+            
+            <div id="wheel-container" class="relative w-[320px] h-[320px] sm:w-[450px] sm:h-[450px] lg:w-[550px] lg:h-[550px] rounded-full border-4 md:border-8 border-white shadow-2xl overflow-hidden" style="transform: translateY(-6px);">
               <div id="wheel" class="w-full h-full relative"></div>
             </div>
-            <div class="absolute w-12 h-12 bg-white rounded-full border-4 border-gray-300 shadow-inner z-10" style="transform: translateY(-6px);"></div>
+            
+            <div class="absolute w-10 h-10 md:w-12 md:h-12 bg-white rounded-full border-4 border-gray-300 shadow-inner z-10" style="transform: translateY(-6px);"></div>
           </div>
           <div id="spin-status" class="mt-4 h-8 text-xl font-semibold text-blue-600 animate-pulse"></div>
         </div>
 
-        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg space-y-4 h-fit">
+        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg space-y-4 h-fit order-3 lg:order-3">
             <div class="text-center text-3xl font-bold text-white p-3 rounded-lg" style="background: linear-gradient(135deg, #FF8C00, #FFA500); text-shadow: 2px 2px 4px rgba(0,0,0,0.2); border-bottom: 4px solid #CD6600">MENU</div>
 			
             <button id="spin-btn" class="btn-press w-full text-2xl font-bold py-4 px-4 rounded-lg shadow-xl text-white transition bg-blue-600 hover:bg-blue-700 border-blue-800 disabled:opacity-50 disabled:cursor-not-allowed">QUAY</button>
@@ -170,7 +206,6 @@
             <button id="download-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-purple-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-purple-600 transition border-purple-700" style="display: none;"><i data-lucide="download"></i><span>Tải về file HTML</span></button>
             <hr class="my-4 border-gray-200" />
             <div class="space-y-3">
-			
 			<div class="space-y-3 bg-white p-3 rounded-lg border border-gray-200">
               <label class="text-sm font-bold text-gray-700 flex items-center">
                 <i data-lucide="book-open" class="w-4 h-4 mr-2 text-purple-600"></i> Quản lý Bài học
@@ -259,15 +294,15 @@
     <div id="winner-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform transition-all"><button id="winner-modal-close-btn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button><div class="w-24 h-24 bg-yellow-300 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative"><i data-lucide="trophy" class="w-12 h-12 text-blue-600"></i><span class="absolute text-yellow-500" style="top: 20px; left: 25px;">●</span><span class="absolute text-red-500" style="top: 30px; left: 15px; font-size: 0.6rem;">●</span><span class="absolute text-blue-500" style="top: 15px; left: 65px; font-size: 0.8rem;">●</span></div><h2 class="text-xl font-semibold text-gray-600">Xin chúc mừng!</h2><p id="winner-name" class="text-4xl font-extrabold text-blue-600 my-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)"></p><p class="text-base text-gray-500 mb-8">đã được chọn!</p><div class="flex flex-col space-y-3"><button id="winner-modal-go-quiz-btn" class="btn-press w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition border-green-700">Bắt đầu Trắc nghiệm</button><button id="winner-modal-close-btn-2" class="w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">Đóng</button></div></div></div>
     
     <div id="question-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><form id="question-form" class="bg-white rounded-lg shadow-2xl p-6 max-w-lg w-full space-y-4"><div class="flex justify-between items-center"><h3 id="question-modal-title" class="text-xl font-bold text-gray-800">Thêm Câu Hỏi Mới</h3><button id="question-modal-close-btn" type="button" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button></div><input type="hidden" id="question-id-input" /><div><label for="question-text-input" class="block text-sm font-medium text-gray-700 mb-1">Thầy cô nhập câu hỏi và các đáp án vào ô bên dưới</label><textarea id="question-text-input" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" required></textarea></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="option-input-0" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 1</label><input id="option-input-0" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm p-2 border" required /></div><div><label for="option-input-1" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 2</label><input id="option-input-1" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm p-2 border" required /></div><div><label for="option-input-2" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 3</label><input id="option-input-2" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm p-2 border" required /></div><div><label for="option-input-3" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 4</label><input id="option-input-3" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm p-2 border" required /></div></div><div><label for="correct-answer-select" class="block text-sm font-medium text-gray-700 mb-1">Đáp án đúng là</label><select id="correct-answer-select" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"><option value="0">Đáp án 1</option><option value="1">Đáp án 2</option><option value="2">Đáp án 3</option><option value="3">Đáp án 4</option></select></div><div class="flex justify-end space-x-3"><button id="question-modal-cancel-btn" type="button" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">Hủy</button><button type="submit" class="btn-press bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800">Lưu Câu Hỏi</button></div></form></div>
-
-    <div id="zalo-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform transition-all"><button id="zalo-modal-close-btn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button><i data-lucide="message-square-plus" class="w-20 h-20 text-blue-500 mx-auto mb-6"></i><h2 class="text-2xl font-bold text-gray-800">Mời Thầy tham gia nhóm</h2><p class="text-base text-gray-600 my-4">Thtập" để cùng trao đổi chuyên môn và tài nguyên giáo dục.</p><a href="https://zalo.me/g/udpr88" target="_blank" class="btn-press w-full flex items-center justify-center space-x-2 bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition border-blue-700"><i data-lucide="send" class="w-5 h-5"></i><span>Tham gia ngay</span></a></div></div>
-
+    
+    <div id="zalo-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform transition-all"><button id="zalo-modal-close-btn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button><i data-lucide="message-square-plus" class="w-20 h-20 text-blue-500 mx-auto mb-6"></i><h2 class="text-2xl font-bold text-gray-800">Mời Thầy tham gia nhóm</h2><p class="text-base text-gray-600 my-4">Tham gia cộng đồng "GVITVN" để cùng trao đổi chuyên môn và tài nguyên giáo dục.</p><a href="https://zalo.me/g/udpr88" target="_blank" class="btn-press w-full flex items-center justify-center space-x-2 bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition border-blue-700"><i data-lucide="send" class="w-5 h-5"></i><span>Tham gia ngay</span></a></div></div>
+    
     <div id="json-generator-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-2xl p-6 max-w-3xl w-full space-y-4"><div class="flex justify-between items-center"><h3 class="text-xl font-bold text-gray-800">Tạo Ngân Hàng Câu Hỏi từ Text</h3><button id="json-generator-close-btn" type="button" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button></div><p class="text-sm text-gray-600">Dán câu hỏi theo định dạng mẫu. Hỗ trợ KaTeX (gõ <code>$công thức$</code>). Hỗ trợ định dạng đơn giản (dòng trống, dấu *). <b>Hỗ trợ gạch chân tiếng Anh:</b> Dùng <code>_từ_</code> để gạch chân.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[50vh]"><div class="flex flex-col"><label for="text-input-area" class="block text-sm font-medium text-gray-700 mb-1">Nhập Text tại đây:</label><textarea id="text-input-area" class="w-full h-full flex-grow border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm p-2 border" placeholder="1 + 1 = ?&#10;2&#10;*3 (đúng)&#10;4&#10;5&#10;&#10;Choose the word with different pronunciation:&#10;A. wash_es_&#10;B. miss_es_&#10;C. go_es_ *&#10;D. mix_es_"></textarea></div><div class="flex flex-col"><label for="json-output-area" class="block text-sm font-medium text-gray-700 mb-1">Kết quả JSON:</label><textarea id="json-output-area" class="w-full h-full flex-grow border-gray-300 rounded-md shadow-sm bg-gray-100 font-mono text-sm p-2 border" readonly placeholder="Kết quả JSON sẽ hiện ở đây..."></textarea></div></div><div class="flex justify-between items-center space-x-3"><button id="convert-to-json-btn" type="button" class="btn-press w-1/2 flex items-center justify-center space-x-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800"><i data-lucide="arrow-right-left"></i><span>Chuyển sang JSON</span></button><button id="download-json-btn" type="button" class="btn-press w-1/2 flex items-center justify-center space-x-2 bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition border-green-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled><i data-lucide="download"></i><span>Tải file JSON</span></button></div></div></div>
-
+    
     <div id="help-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg shadow-2xl p-6 max-w-3xl w-full relative"><div class="flex justify-between items-center mb-4"><h3 class="text-2xl font-bold text-gray-800 flex items-center"><i data-lucide="book-open" class="text-blue-600 mr-3"></i>Hướng Dẫn Sử Dụng</h3><button id="help-modal-close-btn" type="button" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button></div><div id="help-modal-content" class="h-[70vh] overflow-y-auto pr-4"><h2>I. Cách sử dụng cơ bản</h2><ul><li><b>Bước 1: Nhập Danh sách Lớp</b><p>Thầy có thể quản lý nhiều lớp học. Bấm dấu (+) để thêm lớp mới, bấm (Bút chì) để đổi tên, và (Thùng rác) để xóa lớp.</p></li><li><b>Bước 2: Quay số</b><p>Bấm nút "QUAY" màu xanh. Nhạc nền sẽ tự động phát.</p></li><li><b>Bước 3: Trắc nghiệm</b><p>Sau khi quay, bấm "Bắt đầu Trắc nghiệm" để kiểm tra kiến thức học sinh được chọn.</p></li></ul><p><b>Tips:</b> Sử dụng công cụ chuyển đổi công thức (Nút màu hồng) để soạn Toán/Lý/Hóa nhanh chóng.</p></div><div class="flex justify-end pt-4 border-t border-gray-200"><button id="help-modal-close-btn-2" type="button" class="btn-press bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800">Đã hiểu</button></div></div></div>
-
+    
     <div id="math-tool-modal" class="draggable-modal flex flex-col p-4 space-y-3"><div id="math-tool-modal-header" class="draggable-header flex justify-between items-center border-b pb-2 mb-1 bg-gray-100 p-2 rounded-t"><h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="sigma" class="w-4 h-4 mr-2"></i> Chuyển đổi công thức</h3><button id="math-tool-close-btn" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="text-xs text-gray-500">Nhập công thức (ví dụ: x2 hoặc H2O)</div><textarea id="math-input" class="w-full border rounded p-2 text-sm h-20 outline-none" placeholder="Nhập công thức tại đây..."></textarea><div class="flex flex-col space-y-2"><label class="text-xs font-semibold text-gray-600">Chọn chế độ:</label><div class="flex space-x-4"><div class="flex items-center"><input type="radio" id="mode-math" name="math-mode" value="math" class="h-4 w-4 text-blue-600" checked><label for="mode-math" class="ml-2 text-xs text-gray-700 cursor-pointer">Toán / Lý (Số mũ: x²)</label></div><div class="flex items-center"><input type="radio" id="mode-chem" name="math-mode" value="chem" class="h-4 w-4 text-green-600"><label for="mode-chem" class="ml-2 text-xs text-gray-700 cursor-pointer">Hóa / Lý (Chỉ số dưới: H₂)</label></div></div></div><div class="bg-gray-50 p-2 rounded border h-16 flex items-center justify-center overflow-hidden relative"><div id="math-preview" class="text-lg text-blue-700"></div><div class="absolute top-0 left-1 text-[10px] text-gray-400">Preview</div></div><textarea id="math-output" class="w-full border rounded p-2 text-sm h-16 bg-gray-100 font-mono text-xs outline-none" readonly placeholder="Kết quả LaTeX..."></textarea><button id="copy-math-btn" class="btn-press w-full bg-indigo-500 text-white font-bold py-2 rounded hover:bg-indigo-600 text-sm"><i data-lucide="copy" class="inline w-4 h-4 mr-1"></i> Copy kết quả</button></div>
-
+    
     <div id="battle-setup-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4 hidden">
         <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full">
             <h3 class="text-xl font-bold text-center mb-4 text-gray-800">Thiết lập Trận Đấu</h3>
@@ -282,7 +317,7 @@
             </div>
         </div>
     </div>
-
+    
     <div id="video-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
         <div class="bg-black rounded-lg shadow-2xl p-1 w-full max-w-4xl relative">
              <button id="video-modal-close-btn" class="absolute -top-10 right-0 text-white hover:text-gray-300">
@@ -293,7 +328,7 @@
             </div>
         </div>
     </div>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Biến toàn cục
@@ -329,7 +364,8 @@
             let noRepeatQuestions = true; 
             let usedQuestionIds = []; 
             // --- quản lý bài học (Thêm) ---
-            let lessons = [];            // mảng các bài học {id, name, questions: []}
+            let lessons = [];
+            // mảng các bài học {id, name, questions: []}
             let currentLessonId = null;  // id bài đang chọn
 
             // Khởi tạo 1 bài mặc định nếu chưa có
@@ -408,7 +444,7 @@
             const renameClassBtn = document.getElementById('rename-class-btn');
             const deleteClassBtn = document.getElementById('delete-class-btn');
             const noRepeatQuestionsCheckbox = document.getElementById('no-repeat-questions-checkbox'); 
-
+            
             // Tool Math
             const showMathToolBtn = document.getElementById('show-math-tool-btn');
             const mathToolModal = document.getElementById('math-tool-modal');
@@ -470,7 +506,7 @@
             function playCorrectSound() { if (audioInitialized) correctSynth.triggerAttackRelease(["C5", "E5", "G5"], "16n", Tone.now()); }
             function playWrongSound() { if (audioInitialized) wrongSynth.triggerAttackRelease(["C3", "D#3"], "4n", Tone.now()); }
 
-            // --- CONFETTI LOGIC (Được bổ sung) ---
+            // --- CONFETTI LOGIC ---
             function triggerConfetti() {
                 const myConfetti = confettiCanvas.getContext('2d');
                 if(!myConfetti) return;
@@ -534,12 +570,10 @@
                 }, 3000);
             }
 
-            // --- QUIZ GAME LOGIC (Được bổ sung) ---
+            // --- QUIZ GAME LOGIC ---
             function startQuiz() {
-                // Xác định bộ câu hỏi
-             //   let availableQuestions = [...quizData];
+                // Xác định bộ câu hỏi 
                 let availableQuestions = [...getQuestionsForQuiz()];
-
 				
                 if (noRepeatQuestions) {
                     availableQuestions = availableQuestions.filter(q => !usedQuestionIds.includes(q.id));
@@ -859,7 +893,7 @@
                 let loadedFromStorage = false; 
                 const localClassList = localStorage.getItem('vongQuayClassList');
                 const localCurrentClassId = localStorage.getItem('vongQuayCurrentClassId');
-                const localOldStudentList = localStorage.getItem('vongQuayStudentList'); 
+                const localOldStudentList = localStorage.getItem('vongQuayStudentList');
                 
                 const localQuizData = localStorage.getItem('vongQuayQuizData'); 
                 const localLeaderboardData = localStorage.getItem('vongQuayLeaderboardData'); 
@@ -867,7 +901,7 @@
                 const localSoundConfig = localStorage.getItem('vongQuaySoundConfig');
                 const localBgMusic = localStorage.getItem('vongQuayBgMusic'); 
                 const localNoRepeatQuestions = localStorage.getItem('vongQuayNoRepeatQuestions'); 
-                const localUsedQuestionIds = localStorage.getItem('vongQuayUsedQuestionIds'); 
+                const localUsedQuestionIds = localStorage.getItem('vongQuayUsedQuestionIds');
                 
                 if (localClassList) {
                     classList = JSON.parse(localClassList);
@@ -884,10 +918,12 @@
                 }
 
                 if(localQuizData) { quizData = JSON.parse(localQuizData); loadedFromStorage = true; } 
-				        // sau khi đọc localStorage cũ
-                        loadLessonsFromLocalStorage();
-                        updateLessonSelectUI();
-                        renderQuestionListByLesson();
+				
+                // sau khi đọc localStorage cũ
+                loadLessonsFromLocalStorage();
+                updateLessonSelectUI();
+                renderQuestionListByLesson();
+
                 if(localLeaderboardData) { leaderboardData = JSON.parse(localLeaderboardData); loadedFromStorage = true; } 
                 if(localPointsConfig) { const config = JSON.parse(localPointsConfig); pointsPerCorrect = config.correct; pointsPerWrong = config.wrong; pointsCorrectInput.value = pointsPerCorrect; pointsWrongInput.value = pointsPerWrong; } 
                 if(localSoundConfig) { spinSoundSelect.value = localSoundConfig; } 
@@ -903,7 +939,7 @@
                         
                         if (data.quizData) quizData = data.quizData; if (data.leaderboardData) leaderboardData = data.leaderboardData; if(data.pointsConfig) { pointsPerCorrect = data.pointsConfig.correct; pointsPerWrong = data.pointsConfig.wrong; pointsCorrectInput.value = pointsPerCorrect; pointsWrongInput.value = pointsPerWrong; } if(data.soundConfig) { spinSoundSelect.value = data.soundConfig; } } catch (e) {} } 
                 } 
-                if (quizData.length === 0) quizData = initialQuizData; 
+                if (quizData.length === 0) quizData = initialQuizData;
                 
                 updateClassSelectUI(); 
                 saveDataToLocalStorage(); 
@@ -953,7 +989,7 @@
                     if (tickInterval) clearInterval(tickInterval); 
                     playWinnerSound(); 
                     triggerConfetti(); // Gọi Confetti
-            
+                
                     if (bgMusicEnabled) {
                         bgMusicAudio.pause();
                         bgMusicAudio.currentTime = 0;
@@ -981,8 +1017,7 @@
                 }; 
                 const oldDataScript = document.getElementById('app-data-storage'); if (oldDataScript) oldDataScript.remove(); const dataScript = document.createElement('script'); dataScript.id = 'app-data-storage'; dataScript.type = 'application/json'; dataScript.textContent = JSON.stringify(dataToSave); document.body.appendChild(dataScript); const htmlContent = document.documentElement.outerHTML; const blob = new Blob([htmlContent], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'VongQuayMayMan_Luu.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); dataScript.remove(); } catch (e) { console.error(e); } }
             
-			
-			// ----- Các helper lấy/lưu lessons vào localStorage -----
+						// ----- Các helper lấy/lưu lessons vào localStorage -----
             function saveLessonsToLocalStorage() {
               try {
                 localStorage.setItem('vongQuayLessons', JSON.stringify(lessons));
@@ -1054,7 +1089,7 @@
               questionCountInfo.textContent = `Đang có ${lesson.questions.length} câu hỏi.`;
               lucide.createIcons();
               if (window.renderMathInElement) renderMathInElement(questionListUI, katexOptions);
-            
+              
               // gán sự kiện
               document.querySelectorAll('.edit-question-btn').forEach(btn => { btn.onclick = (e) => handleEditQuestionByLesson(e.currentTarget.dataset.id); });
               document.querySelectorAll('.delete-question-btn').forEach(btn => { btn.onclick = (e) => handleDeleteQuestionByLesson(e.currentTarget.dataset.id); });
@@ -1098,7 +1133,7 @@
               const questionPayload = { question: questionTextInput.value.trim(), options: options, correctAnswer: options[correctAnswerIndex] || options[0] };
               const lesson = getCurrentLesson();
               if (!lesson) { alert("Chưa chọn bài. Vui lòng tạo hoặc chọn 1 bài trước."); return; }
-            
+              
               if (id) {
                 const index = lesson.questions.findIndex(q => q.id == id);
                 if (index !== -1) lesson.questions[index] = { ...lesson.questions[index], ...questionPayload };
@@ -1128,7 +1163,7 @@
               } catch (e) { console.error(e); }
             }
             function handleImportQuestionsByLesson() { 
-              // bật file input, xử lý fileSelectedByLesson
+               // bật file input, xử lý fileSelectedByLesson
               importFileInput.onchange = handleFileSelectedByLesson;
               importFileInput.click();
             }
@@ -1201,7 +1236,6 @@
             questionForm.onsubmit = handleFormSubmitByLesson;
 
 			
-			
              function renderQuestionList() {
                 questionListUI.innerHTML = '';
                 if (quizData.length === 0) { questionListUI.innerHTML = `<li class="text-sm text-gray-500 italic text-center">Chưa có câu hỏi nào.</li>`; }
@@ -1245,12 +1279,7 @@
                 reader.readAsText(file); 
                 importFileInput.value = ''; 
             }
-            function parseTextToJSON(rawText) { const questions = []; const normalizedText = rawText.replace(/\r\n/g, '\n'); const blocks = normalizedText.split(/\n\s*\n/).filter(b => b.trim() !== ''); blocks.forEach((block, index) => { const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l); if (lines.length < 2) return; let questionText = lines[0].replace(/^Câu\s*\d+[:.]\s*/i, ''); const options = []; let correctAnswer = ""; for (let i = 1; i < lines.length; i++) { let line = lines[i]; let isCorrect = false; if (line.startsWith('*')) { isCorrect = true; line = line.substring(1).trim(); } if (/\(\s*(đáp án )?đúng\s*\)/i.test(line)) { isCorrect = true; line = line.replace(/\(\s*(đáp án )?đúng\s*\)/i, '').trim(); } if (line.endsWith('*')) { isCorrect = true; line = line.substring(0, line.length - 1).trim(); } line = line.replace(/^([A-D]|[a-d]|[1-4])[\.\)]\s*/, ''); 
-            
-            line = line.replace(/_([^_]+)_/g, '<u>$1</u>');
-           questionText = questionText.replace(/_([^_]+)_/g, '<u>$1</u>');
-            
-            options.push(line); if (isCorrect) correctAnswer = line; } if (!correctAnswer && options.length > 0) correctAnswer = options[0]; if (questionText && options.length >= 2) { questions.push({ id: Date.now() + index, question: questionText, options: options, correctAnswer: correctAnswer }); } }); return JSON.stringify(questions, null, 2); }
+            function parseTextToJSON(rawText) { const questions = []; const normalizedText = rawText.replace(/\r\n/g, '\n'); const blocks = normalizedText.split(/\n\s*\n/).filter(b => b.trim() !== ''); blocks.forEach((block, index) => { const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l); if (lines.length < 2) return; let questionText = lines[0].replace(/^Câu\s*\d+[:.]\s*/i, ''); const options = []; let correctAnswer = ""; for (let i = 1; i < lines.length; i++) { let line = lines[i]; let isCorrect = false; if (line.startsWith('*')) { isCorrect = true; line = line.substring(1).trim(); } if (/\(\s*(đáp án )?đúng\s*\)/i.test(line)) { isCorrect = true; line = line.replace(/\(\s*(đáp án )?đúng\s*\)/i, '').trim(); } if (line.endsWith('*')) { isCorrect = true; line = line.substring(0, line.length - 1).trim(); } line = line.replace(/^([A-D]|[a-d]|[1-4])[\.\)]\s*/, ''); line = line.replace(/_([^_]+)_/g, '<u>$1</u>'); questionText = questionText.replace(/_([^_]+)_/g, '<u>$1</u>'); options.push(line); if (isCorrect) correctAnswer = line; } if (!correctAnswer && options.length > 0) correctAnswer = options[0]; if (questionText && options.length >= 2) { questions.push({ id: Date.now() + index, question: questionText, options: options, correctAnswer: correctAnswer }); } }); return JSON.stringify(questions, null, 2); }
 
             function handleConvertToJson() { 
                 const rawText = textInputArea.value; const jsonString = parseTextToJSON(rawText); jsonOutputArea.value = jsonString; 
@@ -1336,9 +1365,36 @@
             
             // Render Math on body loaded
             setTimeout(() => { if (window.renderMathInElement) { renderMathInElement(document.body, katexOptions); } }, 500);
-			
+
+            /* --- HEADER LOGIC: CLOCK & FULLSCREEN (ĐÃ THÊM) --- */
+            function updateHeaderClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
+                const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                const timeEl = document.getElementById('header-realtime');
+                const dateEl = document.getElementById('header-date');
+                
+                if(timeEl) timeEl.textContent = timeStr;
+                if(dateEl) dateEl.textContent = dateStr;
+            }
+            setInterval(updateHeaderClock, 1000);
+            updateHeaderClock();
+
+            window.toggleFullScreen = function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`Lỗi bật toàn màn hình: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            };
+            
 			/* ==========================================
-               LOGIC ĐẤU KHÁNG (Dán vào trước dấu đóng }); )
+               LOGIC ĐẤU KHÁNG
                ========================================== */
             let battleState = { p1: { name: '', score: 0 }, p2: { name: '', score: 0 }, questions: [], currentIdx: 0, isActive: false, canBuzz: false, buzzedPlayer: null };
 
@@ -1504,11 +1560,7 @@
                 document.getElementById('battle-view').style.display = 'none';
                 document.getElementById('wheel-view').style.display = 'flex';
             };
-            /* KẾT THÚC LOGIC ĐẤU KHÁNG */
         });
     </script>
 </body>
 </html>
-
-
-
